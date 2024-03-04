@@ -1,0 +1,16 @@
+{
+    "manifest_version": 3,
+    "name": "Auto Tab Cleaner",
+    "version": "1.0.0",
+    "permissions": [
+        "tabs",
+        "storage",
+        "alarms"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_popup": "popup.html"
+    }
+}
