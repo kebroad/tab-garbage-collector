@@ -1,16 +1,20 @@
 {
     "manifest_version": 3,
-    "name": "Auto Tab Cleaner",
+    "name": "Tab Garbage Collector",
     "version": "1.0.0",
     "permissions": [
         "tabs",
         "storage",
-        "alarms"
+        "alarms",
+        "contextMenus"
     ],
     "background": {
         "service_worker": "background.js"
     },
     "action": {
         "default_popup": "popup.html"
+    },
+    "icons": {
+        "128": "icons/icon128.png"
     }
 }

@@ -34,15 +34,13 @@ chrome.alarms.onAlarm.addListener(alarm => {
     }
 });
 
-// Function to check tabs against the user-defined duration and whitelist
+// Function to check tabs against the user-defined duration
 function checkTabsAndClose() {
-    chrome.storage.sync.get(['duration', 'whitelist'], (data) => {
+    chrome.storage.sync.get(['duration'], (data) => {
         if (!data.duration) {
             data.duration = 60; // Default to 60 minutes if not set
         }
-        if (!data.whitelist) {
-            data.whitelist = []; // Default to an empty array if not set
-        }
+        
         // Get the latest tabTimes from storage
         chrome.storage.local.get(['tabTimes'], (result) => {
             if (result.tabTimes) {
@@ -54,10 +52,8 @@ function checkTabsAndClose() {
             const now = Date.now();
             tabs.forEach((tab) => {
                 const tabTime = tabTimes[tab.id];
-                if (tabTime && (now - tabTime) >= data.duration * 60000) {
-                    if (data.whitelist.some(domain => tab.url && tab.url.includes(domain))) {
-                        return; // Skip this tab
-                    }
+                // Only close tabs that aren't pinned and have exceeded the time limit
+                if (!tab.pinned && tabTime && (now - tabTime) >= data.duration * 60000) {
                     chrome.tabs.remove(tab.id); // Close the tab
                 }
             });
@@ -70,5 +66,31 @@ chrome.tabs.onRemoved.addListener((tabId) => {
     if (tabTimes[tabId]) {
         delete tabTimes[tabId];
         chrome.storage.local.set({tabTimes: tabTimes});
+    }
+});
+
+// Create context menu item when extension is installed
+chrome.runtime.onInstalled.addListener(() => {
+    chrome.contextMenus.create({
+        id: "toggleKeep",
+        title: "Keep Tab Open",
+        contexts: ["all"]
+    });
+});
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === "toggleKeep") {
+        chrome.tabs.get(tab.id, (tabInfo) => {
+            // Toggle the pinned state
+            const newPinnedState = !tabInfo.pinned;
+            chrome.tabs.update(tab.id, {
+                pinned: newPinnedState
+            });
+            // Update the context menu text based on the new state
+            chrome.contextMenus.update("toggleKeep", {
+                title: newPinnedState ? "Allow Tab to Close" : "Keep Tab Open"
+            });
+        });
     }
 });
